@@ -1,14 +1,19 @@
 require('dotenv').config();
 const inquirer = require('inquirer');
 const mysql = require('mysql');
+const cTable = require('console.table');
 
 const connection = mysql.createConnection({
-    host: process.env.DB_HOST,
+    host: "localhost", //process.env.DB_HOST,
     port: 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+    user: "root",//process.env.DB_USER,
+    password: "password", //process.env.DB_PASSWORD,
+    database: "officeDB" //process.env.DB_NAME
 });
+
+
+let managersList = [];
+const rolesList = [];
 
 // View all employees *
 // View all roles *
@@ -21,6 +26,23 @@ const connection = mysql.createConnection({
 // Update employee roles -> drop down roles
 // Update employee manager -> drop down managers
 
+const getEmployees = () => {
+    connection.query('SELECT id, first_name AS "First Name", last_name AS "Last Name" FROM employee', (err, res) => {
+        if (err) throw err;
+        console.table(res)
+
+        managersList = res.map(({id, last_name, first_name}) => [id, last_name, first_name]);
+        console.table(managersList)
+    });
+};
+
+const viewItems = (table) => {
+    connection.query('SELECT * FROM ??',[table], (err, res) => {
+        if (err) throw err;
+        console.table(res)
+    })
+}
+
 const userActionChoices = [
     'Add Department',
     'Add Role',
@@ -29,7 +51,8 @@ const userActionChoices = [
     'Update Employee Manager', 
     'View All Departments',
     'View All Roles',
-    'View All Employees'
+    'View All Employees',
+    'Exit'
 ]
 
 const startupQuestions = [
@@ -43,28 +66,63 @@ const startupQuestions = [
 
 const departmentInfoQuestions = [
     {
-
-    }
+        name: 'name',
+        type: 'input',
+        message: 'What is the department name?'
+    },
 ];
 
 const roleInfoQuestions = [
     {
-
-    }
+        name: 'title',
+        type: 'input',
+        message: 'What is the title of the role?'
+    },
+    {
+        name: 'salary',
+        type: 'input',
+        message: 'What is the salary?'
+    },
+    {
+        name: 'department',
+        type: 'input',
+        message: 'What is the department?'
+    },
 ];
 
 const employeeInfoQuestions = [
     {
-        name: ''
-    }
+        name: 'firstName',
+        type: 'input',
+        message: 'What is the first name?'
+    },
+    {
+        name: 'lastName',
+        type: 'input',
+        message: 'What is the last name?'
+    },
+    {
+        name: 'role',
+        type: 'list',
+        message: 'What is the role?',
+        choices: rolesList
+
+    },
+    {
+        name: 'manager',
+        type: 'list',
+        message: 'Who is the manager?', 
+        choices: managersList
+    },
 ];
 
 const add = async (questions) => {
-
+    return
+    
 };
 
-const view = async () => {
-
+const viewAllEmployees = async () => {
+    return
 };
 
 const init = async () => {
@@ -81,16 +139,23 @@ const init = async () => {
             add(employeeInfoQuestions);
             break;
         case 'View All Departments':
+            viewItems('department')
             break;
         case 'View All Roles':
+            viewItems('role');
             break;
-        case 'View Add Employees':
+        case 'View All Employees':
+            console.log('View all employees')
+            // getEmployees();
+            viewItems('employee');
             break;
-    }
-
+        case 'Exit':
+            connection.end();
+    };
 };
 
 connection.connect((err) => {
     if (err) throw err;
+    console.log('Connection Succesful....\n')
     init();
 })
