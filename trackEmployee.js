@@ -11,37 +11,9 @@ const connection = mysql.createConnection({
     database: "officeDB" //process.env.DB_NAME
 });
 
-
-let managersList = [];
-const rolesList = [];
-
-// View all employees *
-// View all roles *
-// View all departments * 
-
-// Add departments ??
-// Add roles  ??
-// Add employees ??
-
-// Update employee roles -> drop down roles
-// Update employee manager -> drop down managers
-
-const getEmployees = () => {
-    connection.query('SELECT id, first_name AS "First Name", last_name AS "Last Name" FROM employee', (err, res) => {
-        if (err) throw err;
-        console.table(res)
-
-        managersList = res.map(({id, last_name, first_name}) => [id, last_name, first_name]);
-        console.table(managersList)
-    });
-};
-
-const viewItems = (table) => {
-    connection.query('SELECT * FROM ??',[table], (err, res) => {
-        if (err) throw err;
-        console.table(res)
-    })
-}
+let managersList; 
+let rolesList; 
+let departmentsList;
 
 const userActionChoices = [
     'Add Department',
@@ -53,7 +25,7 @@ const userActionChoices = [
     'View All Roles',
     'View All Employees',
     'Exit'
-]
+];
 
 const startupQuestions = [
     {
@@ -62,7 +34,7 @@ const startupQuestions = [
         message: 'What would you like to do?',
         choices: userActionChoices
     },
-]
+];
 
 const departmentInfoQuestions = [
     {
@@ -116,17 +88,78 @@ const employeeInfoQuestions = [
     },
 ];
 
+const getDepartments = () => {
+    connection.query('SELECT id, name AS "Name" FROM department', (err, res) => {
+        if (err) throw err;
+
+        departmentsList = res.map(({ id, name }) => [id, name]);
+    });
+};
+
+const getRoles = () => {
+    connection.query('SELECT title FROM role', async (err, res) => {
+        if (err) throw err;
+        rolesList = await res.map(({ title }) => [title]);
+        if(rolesList) console.log(rolesList);
+    });
+};
+
+const getEmployees = () => {
+    connection.query('SELECT id, first_name, last_name FROM employee', async (err, res) => {
+        if (err) throw err;
+
+        managersList = await res.map(({ id, last_name, first_name }) => `${first_name} ${last_name} (ID# ${id})`);
+        console.log(managersList);
+        console.log("what");
+    });
+};
+
+
+const viewAllItems = (table) => {
+    connection.query('SELECT * FROM ??', [table], async (err, res) => {
+        if (err) throw err;
+        console.table(await res);
+    });
+};
+
+const addEmpolyee = async () => {
+    console.log('Add Employee\n')
+    console.log(rolesList)
+    if(rolesList) {
+        console.log('Add Employee IN\n')
+        const { firstName, lastName, role, manager } = await inquirer.prompt(employeeInfoQuestions);
+        const managerStringLength = manager.managerStringLength; 
+        const managerId = manager.splice(manager.find('ID# '),managerStringLength-1);
+        console.log(managerId);
+
+        // connection.query('SELECT * FROM employee WHERE?', {
+        //     manager_id: firstName,
+        //     last_name: lastName
+        // }, 
+        // (err,res) => {
+        //     if(err) throw err;
+        //     console.log(res);
+        // })
+        // connection.query('UPDATE employee ()');
+    } else {
+        console.log('Please enter a role first.\n');
+    };
+};
+
 const add = async (questions) => {
     return
     
 };
 
-const viewAllEmployees = async () => {
-    return
-};
-
 const init = async () => {
     const {userAction} = await inquirer.prompt(startupQuestions);
+
+    // getDepartments()
+    getRoles();
+    // getEmployees();
+
+    console.log("first")
+
 
     switch(userAction) {
         case 'Add Department':
@@ -136,26 +169,30 @@ const init = async () => {
             add(roleInfoQuestions);
             break;
         case 'Add Employee':
-            add(employeeInfoQuestions);
+            console.log('wasdasd')
+            console.log('wasdasd')
+            console.log('wasdasd')
+            console.log('wasdasd')
+            console.log('wasdasd')
             break;
         case 'View All Departments':
-            viewItems('department')
+            viewAllItems('department')
             break;
         case 'View All Roles':
-            viewItems('role');
+            viewAllItems('role');
             break;
         case 'View All Employees':
-            console.log('View all employees')
-            // getEmployees();
-            viewItems('employee');
+            viewAllItems('employee');
             break;
         case 'Exit':
             connection.end();
+            return;
     };
+    init();
 };
 
 connection.connect((err) => {
     if (err) throw err;
     console.log('Connection Succesful....\n')
     init();
-})
+});
