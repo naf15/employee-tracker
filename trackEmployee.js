@@ -62,89 +62,109 @@ const roleInfoQuestions = [
     },
 ];
 
-const employeeInfoQuestions = [
-    {
-        name: 'firstName',
-        type: 'input',
-        message: 'What is the first name?'
-    },
-    {
-        name: 'lastName',
-        type: 'input',
-        message: 'What is the last name?'
-    },
-    {
-        name: 'role',
-        type: 'list',
-        message: 'What is the role?',
-        choices: rolesList
-
-    },
-    {
-        name: 'manager',
-        type: 'list',
-        message: 'Who is the manager?', 
-        choices: managersList
-    },
-];
-
-const getDepartments = () => {
-    connection.query('SELECT id, name AS "Name" FROM department', (err, res) => {
+const getDepartments = (func) => {
+    connection.query('SELECT id, name FROM department', async (err, res) => {
         if (err) throw err;
 
-        departmentsList = res.map(({ id, name }) => [id, name]);
+        departmentsList = await res.map(({ name }) => name );
+
+        getRoles(func);
     });
 };
 
-const getRoles = () => {
+const getRoles = (func) => {
     connection.query('SELECT title FROM role', async (err, res) => {
         if (err) throw err;
-        rolesList = await res.map(({ title }) => [title]);
-        if(rolesList) console.log(rolesList);
+        rolesList = await res.map(({ title }) => title);
+
+        getEmployees(func)
     });
 };
 
-const getEmployees = () => {
+const getEmployees = (func) => {
     connection.query('SELECT id, first_name, last_name FROM employee', async (err, res) => {
         if (err) throw err;
 
         managersList = await res.map(({ id, last_name, first_name }) => `${first_name} ${last_name} (ID# ${id})`);
-        console.log(managersList);
-        console.log("what");
+        
+        func();
     });
 };
 
 
 const viewAllItems = (table) => {
-    connection.query('SELECT * FROM ??', [table], async (err, res) => {
+    connection.query('SELECT * FROM ??', [table], (err, res) => {
         if (err) throw err;
-        console.table(await res);
+        console.table(res);
+        init();
     });
 };
 
-const addEmpolyee = async () => {
-    console.log('Add Employee\n')
-    console.log(rolesList)
-    if(rolesList) {
-        console.log('Add Employee IN\n')
-        const { firstName, lastName, role, manager } = await inquirer.prompt(employeeInfoQuestions);
-        const managerStringLength = manager.managerStringLength; 
-        const managerId = manager.splice(manager.find('ID# '),managerStringLength-1);
-        console.log(managerId);
+const addDepartment = async () => {
+    const { name } = await inquirer.prompt(departmentInfoQuestions);
 
-        // connection.query('SELECT * FROM employee WHERE?', {
-        //     manager_id: firstName,
-        //     last_name: lastName
-        // }, 
-        // (err,res) => {
-        //     if(err) throw err;
-        //     console.log(res);
-        // })
-        // connection.query('UPDATE employee ()');
+    if( departmentsList.indexOf(name) >= 0 ){
+        console.log('Department already exists!\n');
     } else {
-        console.log('Please enter a role first.\n');
+        connection.query(`INSERT INTO department SET ?`, {name: name}, (err, res) => {
+            if (err) throw err;
+            console.log('Department added!\n');
+            init();
+        })
+    }
+};
+
+const addEmployee = async () => {
+    if(rolesList) {
+        const { firstName, lastName, role, manager } = await inquirer.prompt([
+            {
+                name: 'firstName',
+                type: 'input',
+                message: 'What is the first name?'
+            },
+            {
+                name: 'lastName',
+                type: 'input',
+                message: 'What is the last name?'
+            },
+            {
+                name: 'role',
+                type: 'list',
+                message: 'What is the role?',
+                choices: rolesList
+            },
+            {
+                name: 'manager',
+                type: 'list',
+                message: 'Who is the manager?', 
+                choices: managersList
+            },
+        ])
+              
+        const managerStringLength = manager.length; 
+        const managerId = parseInt(manager.slice(manager.indexOf('ID# ') + 4 ,managerStringLength-1));
+        console.log(role)
+
+        connection.query(`SELECT id FROM role WHERE ?`,{title: role}, (err, res) => {
+            if (err) throw err;
+            const [ roleId ] = res.map(({id}) => id);
+
+            connection.query(`INSERT INTO employee SET ?`, 
+            {
+                first_name: firstName, 
+                last_name: lastName, 
+                role_id: roleId, 
+                manager_id: managerId
+            }, 
+            (err, res) => {
+                if (err) throw err;
+                console.log('Employee added!\n');
+                init();
+            });
+        });
     };
 };
+        
 
 const add = async (questions) => {
     return
@@ -154,26 +174,16 @@ const add = async (questions) => {
 const init = async () => {
     const {userAction} = await inquirer.prompt(startupQuestions);
 
-    // getDepartments()
-    getRoles();
-    // getEmployees();
-
-    console.log("first")
-
 
     switch(userAction) {
         case 'Add Department':
-            add(departmentInfoQuestions);
+            getDepartments(addDepartment);
             break;
         case 'Add Role':
-            add(roleInfoQuestions);
+            getDepartments(addRole);
             break;
         case 'Add Employee':
-            console.log('wasdasd')
-            console.log('wasdasd')
-            console.log('wasdasd')
-            console.log('wasdasd')
-            console.log('wasdasd')
+            getDepartments(addEmployee);
             break;
         case 'View All Departments':
             viewAllItems('department')
@@ -187,8 +197,10 @@ const init = async () => {
         case 'Exit':
             connection.end();
             return;
+        case '':
+            init();
     };
-    init();
+     
 };
 
 connection.connect((err) => {
