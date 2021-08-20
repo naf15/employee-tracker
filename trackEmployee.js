@@ -57,8 +57,9 @@ const roleInfoQuestions = [
     },
     {
         name: 'department',
-        type: 'input',
-        message: 'What is the department?'
+        type: 'list',
+        message: 'What is the department?',
+        choices: departmentsList
     },
 ];
 
@@ -91,7 +92,6 @@ const getEmployees = (func) => {
     });
 };
 
-
 const viewAllItems = (table) => {
     connection.query('SELECT * FROM ??', [table], (err, res) => {
         if (err) throw err;
@@ -112,6 +112,48 @@ const addDepartment = async () => {
             init();
         })
     }
+};
+
+const addRole = async () => {
+    const { title, salary, department } = await inquirer.prompt([
+        {
+            name: 'title',
+            type: 'input',
+            message: 'What is the title of the role?'
+        },
+        {
+            name: 'salary',
+            type: 'input',
+            message: 'What is the salary?'
+        },
+        {
+            name: 'department',
+            type: 'list',
+            message: 'What is the department?',
+            choices: departmentsList
+        },
+    ]);
+
+    if (rolesList.indexOf(title) >= 0) {
+        console.log('Role already exists!');
+        addRole();
+    } else {
+        connection.query(`SELECT id FROM department WHERE ?`, {name: department}, (err, res) => {
+            if (err) throw err;
+            const [ departmentId ] = res.map(({id}) => id)
+
+            connection.query(`INSERT INTO role SET ?`, {
+                title: title,
+                salary: salary,
+                department_id: departmentId
+            },
+            (err, res) => {
+                if (err) throw err;
+                console.log('Role added!\n');
+                init();
+            });
+        });
+    };
 };
 
 const addEmployee = async () => {
@@ -165,12 +207,6 @@ const addEmployee = async () => {
     };
 };
         
-
-const add = async (questions) => {
-    return
-    
-};
-
 const init = async () => {
     const {userAction} = await inquirer.prompt(startupQuestions);
 
