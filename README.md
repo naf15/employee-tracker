@@ -68,6 +68,10 @@ How do you deliver this? Here are some guidelines:
 
 ![Employee Tracker](Assets/employee-tracker.gif)
 
+## Demo
+
+[Demo of Application] ()
+
 ## Contact
 
 - Name: Nafis Rahman

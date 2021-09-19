@@ -179,10 +179,10 @@ const addEmployee = async () => {
                 name: 'manager',
                 type: 'list',
                 message: 'Who is the manager?', 
-                choices: managersList
+                choices: managersList.length === 0 ? ['Self'] : managersList
             },
         ])
-              
+        
         const managerStringLength = manager.length; 
         const managerId = parseInt(manager.slice(manager.indexOf('ID# ') + 4 ,managerStringLength-1));
         console.log(role)
@@ -191,18 +191,33 @@ const addEmployee = async () => {
             if (err) throw err;
             const [ roleId ] = res.map(({id}) => id);
 
-            connection.query(`INSERT INTO employee SET ?`, 
+            if (manager !== "Self") {
+                connection.query(`INSERT INTO employee SET ?`, 
+                {
+                    first_name: firstName, 
+                    last_name: lastName, 
+                    role_id: roleId, 
+                    manager_id: managerId
+                }, 
+                (err, res) => {
+                    if (err) throw err;
+                    console.log('Employee added!\n');
+                    init();
+                });
+            } else {
+                connection.query(`INSERT INTO employee SET ?`, 
             {
                 first_name: firstName, 
                 last_name: lastName, 
-                role_id: roleId, 
-                manager_id: managerId
+                role_id: roleId
             }, 
             (err, res) => {
                 if (err) throw err;
                 console.log('Employee added!\n');
                 init();
             });
+            }
+            
         });
     };
 };
