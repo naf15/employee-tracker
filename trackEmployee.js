@@ -206,18 +206,17 @@ const addEmployee = async () => {
                 });
             } else {
                 connection.query(`INSERT INTO employee SET ?`, 
-            {
-                first_name: firstName, 
-                last_name: lastName, 
-                role_id: roleId
-            }, 
-            (err, res) => {
-                if (err) throw err;
-                console.log('Employee added!\n');
-                init();
-            });
-            }
-            
+                {
+                    first_name: firstName, 
+                    last_name: lastName, 
+                    role_id: roleId
+                }, 
+                (err, res) => {
+                    if (err) throw err;
+                    console.log('Employee added!\n');
+                    init();
+                });
+            };
         });
     };
 };

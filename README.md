@@ -70,7 +70,7 @@ How do you deliver this? Here are some guidelines:
 
 ## Demo
 
-[Demo of Application] ()
+[Demo of Application] (https://drive.google.com/file/d/10RT9oLXGZkTiu7alxZ5wMY_G3NJ6yibu/view)
 
 ## Contact
 
